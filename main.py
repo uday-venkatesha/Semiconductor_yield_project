@@ -1,31 +1,45 @@
+"""
+main.py — Pipeline Orchestrator
+────────────────────────────────
+Runs all four Python phases in sequence.  Each phase saves its outputs to
+data/artifacts/ so the next phase can load them independently.
+
+Usage:
+    python main.py
+"""
+
 import subprocess
 import sys
 import os
 
-def run_script(script_path):
-    print(f"--- Running {script_path} ---")
-    # sys.executable ensures it uses your active virtual environment's Python
-    result = subprocess.run([sys.executable, script_path], capture_output=False)
-    
+def run_script(script_path: str) -> None:
+    print(f"─── Running {script_path} {'─' * (50 - len(script_path))}")
+    result = subprocess.run(
+        [sys.executable, script_path],
+        capture_output=False,   # stream stdout/stderr directly to terminal
+    )
     if result.returncode != 0:
-        print(f"\n❌ Error executing {script_path}. Pipeline halted.")
+        print(f"\n❌  Error in {script_path}. Pipeline halted.")
         sys.exit(1)
-    print(f"✅ Successfully completed {script_path}\n")
+    print(f"✅  {script_path} completed\n")
 
 if __name__ == "__main__":
-    print("🚀 Starting Predictive Quality & Yield Optimization Pipeline...\n")
-    
-    # Ensure the database directory exists before running the pipeline
-    os.makedirs("data/db", exist_ok=True)
-    
-    scripts_to_run = [
+    print("🚀  Predictive Quality & Yield Optimization Pipeline — Starting...\n")
+
+    # Ensure all required directories exist before any script runs
+    for directory in ['data/raw', 'data/artifacts', 'data/db']:
+        os.makedirs(directory, exist_ok=True)
+
+    scripts = [
         "src/01_preprocess.py",
         "src/02_model_training.py",
         "src/03_root_cause.py",
-        "src/04_database_pipeline.py"
+        "src/04_database_pipeline.py",
     ]
-    
-    for script in scripts_to_run:
+
+    for script in scripts:
         run_script(script)
-        
-    print("🎉 Pipeline executed successfully! The SQLite database is ready at data/db/manufacturing_yield.db")
+
+    print("🎉  Pipeline complete!")
+    print("    SQLite database : data/db/manufacturing_yield.db")
+    print("    Artifacts       : data/artifacts/")
